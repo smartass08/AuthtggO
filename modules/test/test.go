@@ -13,7 +13,10 @@ func testHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	if !utils.IsUserOwner(ctx.EffectiveUser.Id) {
 		return nil
 	}
-	fmt.Println()
+	err := db.UpdateAlllicenses()
+	if err != nil {
+		fmt.Println(err)
+	}
 	/*_, err := b.SendMessage(ctx.EffectiveChat.Id,authGG.GetInfo(firstArgument, secondArgument),
 		&gotgbot.SendMessageOpts{
 			ParseMode: "HTML",
@@ -23,8 +26,8 @@ func testHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	if err != nil {
 		fmt.Println(err)
 		return err
-	}*/
-	db.AddLicenses(db.GetLicenses())
+	}
+	db.AddLicenses(db.GetLicenses())*/
 	return nil
 }
 

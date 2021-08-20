@@ -9,6 +9,7 @@ import (
 	"AuthtggO/modules/start"
 	"AuthtggO/modules/test"
 	"AuthtggO/utils"
+	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"net/http"
@@ -29,6 +30,10 @@ func main()  {
 	l.Info("Starting Bot.")
 	l.Debug("token: ", token)
 	db.InitDbClient()
+	err := db.InitLicense()
+	if err != nil {
+		fmt.Println(err)
+	}
 	b, err := gotgbot.NewBot(token, &gotgbot.BotOpts{
 		Client:      http.Client{},
 		GetTimeout:  gotgbot.DefaultGetTimeout,

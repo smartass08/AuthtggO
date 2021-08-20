@@ -2,14 +2,19 @@ package db
 
 import (
 	"AuthtggO/helper/authGG"
+	"AuthtggO/logHelper"
 	"AuthtggO/utils"
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"sync"
 	"time"
 )
 
-var all_licenses []Licence
+var allLicenses []*Licence
+var allLicensesMutex sync.Mutex
 
 type Licence struct {
 	Key    string `json:"token,omitempty"`
@@ -19,7 +24,7 @@ type Licence struct {
 	Days   string `json:"days,omitempty"`
 }
 
-func AddLicenses(licenses []Licence) error{
+func AddLicensesFirstTIme(licenses []Licence) error{
 	docs := make([]interface{}, 0)
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
@@ -27,14 +32,55 @@ func AddLicenses(licenses []Licence) error{
 		doc, _ := toDoc(v)
 		docs = append(docs, bson.M{"License": v.Key, "data": *doc})
 	}
-	fmt.Println(docs)
 	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses-test")
-	result, err := collection.InsertMany(ctx, docs)
+	_, err := collection.InsertMany(ctx, docs)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
-	fmt.Println(result)
 	return nil
+}
+
+func AddLicense(licence Licence) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	defer cancel()
+	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("License-test")
+	doc , err := toDoc(licence)
+	if err != nil {
+		return err
+	}
+	_, err = collection.InsertOne(ctx, bson.M{"License": licence.Key, "data": doc})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func FetchAllLicences() (licences []*Licence, err error){
+	logger := logHelper.GetLogger()
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	defer cancel()
+	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses-test")
+	cur, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	for cur.Next(ctx) {
+		var result bson.M
+		err := cur.Decode(&result)
+		if err != nil {
+			logger.Error(err)
+		} else {
+			licences = append(licences, &Licence{
+				Key:    result["data"].(primitive.M)["key"].(string),
+				Rank:   result["data"].(primitive.M)["rank"].(string),
+				Used:   result["data"].(primitive.M)["used"].(string),
+				UsedBy: result["data"].(primitive.M)["usedby"].(string),
+				Days:   result["data"].(primitive.M)["days"].(string),
+			})
+		}
+	}
+	return licences, nil
 }
 
 func GetLicenses() []Licence{
@@ -51,8 +97,88 @@ func GetLicenses() []Licence{
 	return licenses
 }
 
-func InitLicense()  {
-	
+func InitLicense() error {
+	licences, err := FetchAllLicences()
+	if err != nil {
+		return err
+	}
+	for _, v := range licences {
+		AddLicenseToLocal(v)
+	}
+	return nil
+}
+
+func AddLicenseToLocal(trigger *Licence) {
+	allLicensesMutex.Lock()
+	defer allLicensesMutex.Unlock()
+	allLicenses = append(allLicenses, trigger)
+}
+
+func UpdateAlllicenses() error{
+	var operations []mongo.WriteModel
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	defer cancel()
+	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses-test")
+	for _, v := range authGG.FetchAll(){
+		newLicense := true
+			for ii, vv := range allLicenses{
+				if v.(map[string]interface{})["token"].(string) == vv.Key{
+					newLicense = false
+					if !CompareMapStruct(v.(map[string]interface{}), *vv){
+						newLicense := &Licence{
+							Key:    vv.Key,
+							Rank:   v.(map[string]interface{})["rank"].(string),
+							Used:   v.(map[string]interface{})["used"].(string),
+							UsedBy: v.(map[string]interface{})["used_by"].(string),
+							Days:   v.(map[string]interface{})["days"].(string),
+						}
+						allLicenses[ii] = newLicense
+						doc , err := toDoc(newLicense)
+						if err != nil {
+							return err
+						}
+						operation := mongo.NewUpdateOneModel()
+						operation.SetFilter(bson.M{"License": newLicense.Key})
+						operation.SetUpdate(bson.M{"$set": bson.M{"License": newLicense.Key, "data": doc}})
+						operations = append(operations, operation)
+					}
+				}
+			}
+			if newLicense{
+				newLicense := &Licence{
+					Key:    v.(map[string]interface{})["token"].(string),
+					Rank:   v.(map[string]interface{})["rank"].(string),
+					Used:   v.(map[string]interface{})["used"].(string),
+					UsedBy: v.(map[string]interface{})["used_by"].(string),
+					Days:   v.(map[string]interface{})["days"].(string),
+				}
+				doc , err := toDoc(newLicense)
+				if err != nil {
+					return err
+				}
+				operation := mongo.NewInsertOneModel()
+				operation.SetDocument(bson.M{"License": newLicense.Key, "data": doc})
+				operations = append(operations, operation)
+				AddLicenseToLocal(newLicense)
+			}
+
+	}
+	bulkOption := options.BulkWriteOptions{}
+	bulkOption.SetOrdered(false)
+	_, err := collection.BulkWrite(ctx, operations, &bulkOption)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+func CompareMapStruct(someMap map[string]interface{}, someStruct Licence) (same bool){
+	if someMap["rank"] != someStruct.Rank || someMap["used_by"] != someStruct.UsedBy || someMap["days"] == someStruct.Days {
+		return false
+	}
+	return true
+
 }
 
 func toDoc(v interface{}) (doc *bson.M, err error) {
