@@ -64,3 +64,32 @@ func CreateKey(amount int, duration int, prefix string) string {
 	}
 	return fmt.Sprintf(" %v", strings.TrimLeft(fmt.Sprintf("%s", utils.ParseSliceKeys(keys)), "[]"))
 }
+
+func DeleteKey(keyRaw []string) string {
+	apiObject := Admin.Administration{}
+	message := ""
+	err := apiObject.Init(utils.GetApiHash())
+	if err != nil {
+		return err.Error()
+	}
+	for _, v := range keyRaw{
+		check, err := apiObject.DeleteKey(v)
+		if err != nil {
+			message += fmt.Sprintf("`%v` : %v\n", v, err.Error())
+			continue
+		}
+		message += fmt.Sprintf("`%v` : %v\n", v, check["info"])
+	}
+	fmt.Println(message)
+	return message
+}
+
+func FetchAll() map[string]interface{} {
+	apiObject := Admin.Administration{}
+	err := apiObject.Init(utils.GetApiHash())
+	if err != nil {
+		return nil
+	}
+	kek,_ := apiObject.FetchAllLicenseInfo()
+	return kek
+}

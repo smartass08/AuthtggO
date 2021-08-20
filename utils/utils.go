@@ -18,6 +18,7 @@ type ConfigJson struct {
 	MongoUri    string  `json:"mongo_uri"`
 	OwnerId     int64 `json:"owner_id"`
 	ApiHash		string `json:"apiHashGG"`
+	DataBaseName string `json:"dbName"`
 }
 
 var Config *ConfigJson = InitConfig()
@@ -64,6 +65,10 @@ func GetOwnerId() int64 {
 
 func GetApiHash() string {
 	return Config.ApiHash
+}
+
+func GetDataBaseName() string {
+	return Config.DataBaseName
 }
 
 func GenerateUserLink(userId int64, parseMode string) string {
