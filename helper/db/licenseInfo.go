@@ -174,7 +174,7 @@ func UpdateAlllicenses() error {
 }
 
 func CompareMapStructLicense(someMap map[string]interface{}, someStruct Licence) (same bool) {
-	if someMap["rank"] != someStruct.Rank || someMap["used_by"] != someStruct.UsedBy || someMap["days"] == someStruct.Days {
+	if someMap["rank"] != someStruct.Rank || someMap["used_by"] != someStruct.UsedBy || someMap["days"] != someStruct.Days {
 		return false
 	}
 	return true

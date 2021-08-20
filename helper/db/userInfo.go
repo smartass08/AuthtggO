@@ -183,7 +183,7 @@ func UpdateAllUsers() error {
 
 
 func CompareMapStructUser(someMap map[string]interface{}, someStruct User) (same bool) {
-	if someMap["rank"] != someStruct.Rank || someMap["email"] != someStruct.Email || someMap["username"] == someStruct.UserName || someMap["hwid"] == someStruct.Hwid || someMap["lasptip"] == someStruct.LastIP || someMap["lastlogin"] == someStruct.LastLogin || someMap["expiry_dateA"] == someStruct.ExpiryDate {
+	if someMap["rank"] != someStruct.Rank || someMap["email"] != someStruct.Email || someMap["username"] != someStruct.UserName || someMap["hwid"] != someStruct.Hwid || someMap["lasptip"] != someStruct.LastIP || someMap["lastlogin"] != someStruct.LastLogin || someMap["expiry_dateA"] != someStruct.ExpiryDate {
 		return false
 	}
 	return true
