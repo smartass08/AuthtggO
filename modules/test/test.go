@@ -1,7 +1,7 @@
 package test
 
 import (
-	"AuthtggO/helper/db"
+	"AuthtggO/helper/authGG"
 	"AuthtggO/utils"
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -13,10 +13,7 @@ func testHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	if !utils.IsUserOwner(ctx.EffectiveUser.Id) {
 		return nil
 	}
-	err := db.UpdateAlllicenses()
-	if err != nil {
-		fmt.Println(err)
-	}
+	fmt.Println(authGG.FetchAllUsers())
 	/*_, err := b.SendMessage(ctx.EffectiveChat.Id,authGG.GetInfo(firstArgument, secondArgument),
 		&gotgbot.SendMessageOpts{
 			ParseMode: "HTML",

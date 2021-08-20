@@ -80,16 +80,25 @@ func DeleteKey(keyRaw []string) string {
 		}
 		message += fmt.Sprintf("`%v` : %v\n", v, check["info"])
 	}
-	fmt.Println(message)
 	return message
 }
 
-func FetchAll() map[string]interface{} {
+func FetchAllLicenses() map[string]interface{} {
 	apiObject := Admin.Administration{}
 	err := apiObject.Init(utils.GetApiHash())
 	if err != nil {
 		return nil
 	}
 	kek,_ := apiObject.FetchAllLicenseInfo()
+	return kek
+}
+
+func FetchAllUsers() map[string]interface{} {
+	apiObject := Admin.Administration{}
+	err := apiObject.Init(utils.GetApiHash())
+	if err != nil {
+		return nil
+	}
+	kek,_ := apiObject.FetchAllUserInfo()
 	return kek
 }

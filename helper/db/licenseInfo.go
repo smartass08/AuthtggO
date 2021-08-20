@@ -13,8 +13,10 @@ import (
 	"time"
 )
 
-var allLicenses []*Licence
-var allLicensesMutex sync.Mutex
+var (
+	allLicenses      []*Licence
+	allLicensesMutex sync.Mutex
+)
 
 type Licence struct {
 	Key    string `json:"token,omitempty"`
@@ -24,11 +26,11 @@ type Licence struct {
 	Days   string `json:"days,omitempty"`
 }
 
-func AddLicensesFirstTIme(licenses []Licence) error{
+func AddLicensesFirstTIme(licenses []Licence) error {
 	docs := make([]interface{}, 0)
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
-	for _, v := range licenses{
+	for _, v := range licenses {
 		doc, _ := toDoc(v)
 		docs = append(docs, bson.M{"License": v.Key, "data": *doc})
 	}
@@ -44,7 +46,7 @@ func AddLicense(licence Licence) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
 	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("License-test")
-	doc , err := toDoc(licence)
+	doc, err := toDoc(licence)
 	if err != nil {
 		return err
 	}
@@ -55,7 +57,7 @@ func AddLicense(licence Licence) error {
 	return nil
 }
 
-func FetchAllLicences() (licences []*Licence, err error){
+func FetchAllLicences() (licences []*Licence, err error) {
 	logger := logHelper.GetLogger()
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
@@ -83,15 +85,15 @@ func FetchAllLicences() (licences []*Licence, err error){
 	return licences, nil
 }
 
-func GetLicenses() []Licence{
+func GetLicenses() []Licence {
 	var licenses []Licence
-	for _, v := range authGG.FetchAll(){
+	for _, v := range authGG.FetchAllLicenses() {
 		licenses = append(licenses, Licence{
 			Key:    v.(map[string]interface{})["token"].(string),
-			Rank:    v.(map[string]interface{})["rank"].(string),
-			Used:    v.(map[string]interface{})["used"].(string),
-			UsedBy:  v.(map[string]interface{})["used_by"].(string),
-			Days:    v.(map[string]interface{})["days"].(string),
+			Rank:   v.(map[string]interface{})["rank"].(string),
+			Used:   v.(map[string]interface{})["used"].(string),
+			UsedBy: v.(map[string]interface{})["used_by"].(string),
+			Days:   v.(map[string]interface{})["days"].(string),
 		})
 	}
 	return licenses
@@ -114,54 +116,53 @@ func AddLicenseToLocal(trigger *Licence) {
 	allLicenses = append(allLicenses, trigger)
 }
 
-func UpdateAlllicenses() error{
+func UpdateAlllicenses() error {
 	var operations []mongo.WriteModel
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
 	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses-test")
-	for _, v := range authGG.FetchAll(){
+	for _, v := range authGG.FetchAllLicenses() {
 		newLicense := true
-			for ii, vv := range allLicenses{
-				if v.(map[string]interface{})["token"].(string) == vv.Key{
-					newLicense = false
-					if !CompareMapStruct(v.(map[string]interface{}), *vv){
-						newLicense := &Licence{
-							Key:    vv.Key,
-							Rank:   v.(map[string]interface{})["rank"].(string),
-							Used:   v.(map[string]interface{})["used"].(string),
-							UsedBy: v.(map[string]interface{})["used_by"].(string),
-							Days:   v.(map[string]interface{})["days"].(string),
-						}
-						allLicenses[ii] = newLicense
-						doc , err := toDoc(newLicense)
-						if err != nil {
-							return err
-						}
-						operation := mongo.NewUpdateOneModel()
-						operation.SetFilter(bson.M{"License": newLicense.Key})
-						operation.SetUpdate(bson.M{"$set": bson.M{"License": newLicense.Key, "data": doc}})
-						operations = append(operations, operation)
+		for ii, vv := range allLicenses {
+			if v.(map[string]interface{})["token"].(string) == vv.Key {
+				newLicense = false
+				if !CompareMapStructLicense(v.(map[string]interface{}), *vv) {
+					newLicense := &Licence{
+						Key:    vv.Key,
+						Rank:   v.(map[string]interface{})["rank"].(string),
+						Used:   v.(map[string]interface{})["used"].(string),
+						UsedBy: v.(map[string]interface{})["used_by"].(string),
+						Days:   v.(map[string]interface{})["days"].(string),
 					}
+					allLicenses[ii] = newLicense
+					doc, err := toDoc(newLicense)
+					if err != nil {
+						return err
+					}
+					operation := mongo.NewUpdateOneModel()
+					operation.SetFilter(bson.M{"License": newLicense.Key})
+					operation.SetUpdate(bson.M{"$set": bson.M{"License": newLicense.Key, "data": doc}})
+					operations = append(operations, operation)
 				}
 			}
-			if newLicense{
-				newLicense := &Licence{
-					Key:    v.(map[string]interface{})["token"].(string),
-					Rank:   v.(map[string]interface{})["rank"].(string),
-					Used:   v.(map[string]interface{})["used"].(string),
-					UsedBy: v.(map[string]interface{})["used_by"].(string),
-					Days:   v.(map[string]interface{})["days"].(string),
-				}
-				doc , err := toDoc(newLicense)
-				if err != nil {
-					return err
-				}
-				operation := mongo.NewInsertOneModel()
-				operation.SetDocument(bson.M{"License": newLicense.Key, "data": doc})
-				operations = append(operations, operation)
-				AddLicenseToLocal(newLicense)
+		}
+		if newLicense {
+			newLicense := &Licence{
+				Key:    v.(map[string]interface{})["token"].(string),
+				Rank:   v.(map[string]interface{})["rank"].(string),
+				Used:   v.(map[string]interface{})["used"].(string),
+				UsedBy: v.(map[string]interface{})["used_by"].(string),
+				Days:   v.(map[string]interface{})["days"].(string),
 			}
-
+			doc, err := toDoc(newLicense)
+			if err != nil {
+				return err
+			}
+			operation := mongo.NewInsertOneModel()
+			operation.SetDocument(bson.M{"License": newLicense.Key, "data": doc})
+			operations = append(operations, operation)
+			AddLicenseToLocal(newLicense)
+		}
 	}
 	bulkOption := options.BulkWriteOptions{}
 	bulkOption.SetOrdered(false)
@@ -172,13 +173,11 @@ func UpdateAlllicenses() error{
 	return nil
 }
 
-
-func CompareMapStruct(someMap map[string]interface{}, someStruct Licence) (same bool){
+func CompareMapStructLicense(someMap map[string]interface{}, someStruct Licence) (same bool) {
 	if someMap["rank"] != someStruct.Rank || someMap["used_by"] != someStruct.UsedBy || someMap["days"] == someStruct.Days {
 		return false
 	}
 	return true
-
 }
 
 func toDoc(v interface{}) (doc *bson.M, err error) {
