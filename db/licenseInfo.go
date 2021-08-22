@@ -34,7 +34,7 @@ func AddLicensesFirstTIme(licenses []Licence) error {
 		doc, _ := toDoc(v)
 		docs = append(docs, bson.M{"License": v.Key, "data": *doc})
 	}
-	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses-test")
+	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses")
 	_, err := collection.InsertMany(ctx, docs)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func AddLicensesFirstTIme(licenses []Licence) error {
 func AddLicense(licence Licence) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
-	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("License-test")
+	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses")
 	doc, err := toDoc(licence)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func FetchAllLicences() (licences []*Licence, err error) {
 	logger := logHelper.GetLogger()
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
-	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses-test")
+	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses")
 	cur, err := collection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func UpdateAlllicenses() error {
 	var operations []mongo.WriteModel
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
-	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses-test")
+	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses")
 	for _, v := range authGG.FetchAllLicenses() {
 		newLicense := true
 		for ii, vv := range allLicenses {
@@ -164,20 +164,23 @@ func UpdateAlllicenses() error {
 			AddLicenseToLocal(newLicense)
 		}
 	}
-	bulkOption := options.BulkWriteOptions{}
-	bulkOption.SetOrdered(false)
-	_, err := collection.BulkWrite(ctx, operations, &bulkOption)
-	if err != nil {
-		return err
+	if len(operations) > 0 {
+		bulkOption := options.BulkWriteOptions{}
+		bulkOption.SetOrdered(false)
+		_, err := collection.BulkWrite(ctx, operations, &bulkOption)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func CompareMapStructLicense(someMap map[string]interface{}, someStruct Licence) (same bool) {
 	if someMap["rank"] != someStruct.Rank || someMap["used_by"] != someStruct.UsedBy || someMap["days"] != someStruct.Days {
-		return false
+		same = false
 	}
-	return true
+	same = true
+	return
 }
 
 func toDoc(v interface{}) (doc *bson.M, err error) {
@@ -187,4 +190,13 @@ func toDoc(v interface{}) (doc *bson.M, err error) {
 	}
 	err = bson.Unmarshal(data, &doc)
 	return
+}
+
+func GetOneLicense(license string) (Licence, bool) {
+	for _, v := range allLicenses {
+		if v.Key == license{
+			return *v, true
+		}
+	}
+	return Licence{}, false
 }

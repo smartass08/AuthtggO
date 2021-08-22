@@ -151,7 +151,7 @@ func UpdateAllUsers() error {
 			}
 		}
 		if newUserCheck {
-			newUser :=  &User{
+			newUser := &User{
 				UserName:   v.(map[string]interface{})["username"].(string),
 				Rank:       v.(map[string]interface{})["rank"].(string),
 				ExpiryDate: v.(map[string]interface{})["expiry_date"].(string),
@@ -171,20 +171,39 @@ func UpdateAllUsers() error {
 			AddUserToLocal(newUser)
 		}
 	}
-	bulkOption := options.BulkWriteOptions{}
-	bulkOption.SetOrdered(false)
-	_, err := collection.BulkWrite(ctx, operations, &bulkOption)
-	if err != nil {
-		return err
+	if len(operations) > 0 {
+		bulkOption := options.BulkWriteOptions{}
+		bulkOption.SetOrdered(false)
+		_, err := collection.BulkWrite(ctx, operations, &bulkOption)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-
-
 func CompareMapStructUser(someMap map[string]interface{}, someStruct User) (same bool) {
 	if someMap["rank"] != someStruct.Rank || someMap["email"] != someStruct.Email || someMap["username"] != someStruct.UserName || someMap["hwid"] != someStruct.Hwid || someMap["lasptip"] != someStruct.LastIP || someMap["lastlogin"] != someStruct.LastLogin || someMap["expiry_dateA"] != someStruct.ExpiryDate {
-		return false
+		same = false
 	}
-	return true
+	same = true
+	return
+}
+func GetOneUser(username string) (User, bool) {
+	for _, v := range allUsers {
+		if v.UserName == username{
+			return *v, true
+		}
+	}
+	return User{}, false
+}
+
+func GetallKeysOfUser(username string) []string{
+	allkeys := make([]string, 0)
+	for _,v := range allLicenses {
+		if v.UsedBy == username{
+			allkeys = append(allkeys, v.Key)
+		}
+	}
+	return allkeys
 }

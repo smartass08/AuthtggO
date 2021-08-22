@@ -31,7 +31,16 @@ func initClient() *mongo.Client {
 	return client
 }
 
-func InitDbClient() {
+func InitDbClient() error {
 	DatabaseClient = &DbClient{Mongo: initClient()}
+	err := InitLicense()
+	if err != nil {
+		return err
+	}
+	err = InitUsers()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 

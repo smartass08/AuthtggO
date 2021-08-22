@@ -1,30 +1,24 @@
 package test
 
 import (
-	"AuthtggO/helper/authGG"
 	"AuthtggO/utils"
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
+	"github.com/smartass08/AuthGG-Go/Admin"
 )
 
 func testHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	if !utils.IsUserOwner(ctx.EffectiveUser.Id) {
 		return nil
 	}
-	fmt.Println(authGG.FetchAllUsers())
-	/*_, err := b.SendMessage(ctx.EffectiveChat.Id,authGG.GetInfo(firstArgument, secondArgument),
-		&gotgbot.SendMessageOpts{
-			ParseMode: "HTML",
-			ReplyToMessageId: ctx.EffectiveMessage.MessageId,
-			DisableWebPagePreview: true},
-	)
+	apiObject := Admin.Administration{}
+	err := apiObject.Init(utils.GetApiHash())
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
-	db.AddLicenses(db.GetLicenses())*/
+	fmt.Println(apiObject.FetchLicenseInfo("Nra-MI73N-SH0JN-72DI2-NA2PA"))
 	return nil
 }
 

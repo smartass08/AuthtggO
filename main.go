@@ -1,7 +1,7 @@
 package main
 
 import (
-	"AuthtggO/helper/db"
+	"AuthtggO/db"
 	"AuthtggO/logHelper"
 	"AuthtggO/modules/deleteKey"
 	"AuthtggO/modules/generateKey"
@@ -9,11 +9,15 @@ import (
 	"AuthtggO/modules/start"
 	"AuthtggO/modules/test"
 	"AuthtggO/utils"
-	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"net/http"
+	"sync"
+	"time"
 )
+
+var wg sync.WaitGroup
+
 
 func RegisterAllHandlers(updater *ext.Updater)  {
 	start.LoadStartHandler(updater)
@@ -22,6 +26,30 @@ func RegisterAllHandlers(updater *ext.Updater)  {
 	deleteKey.LoaddeleteKeyHandler(updater)
 	test.LoadTestHandler(updater)
 }
+func periodicCheck()  {
+	l := logHelper.GetLogger()
+	time.Sleep(time.Minute*3)
+	l.Info("Initialising update sequence")
+	defer wg.Done()
+	for {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			l.Info("Checking for new licenses")
+			err := db.UpdateAlllicenses()
+			if err != nil {
+				l.Info(err)
+			}
+			l.Info("Checking for new users")
+			err = db.UpdateAllUsers()
+			if err != nil {
+				l.Info(err)
+			}
+		}()
+		time.Sleep(time.Minute*3)
+	}
+}
+
 
 func main()  {
 	logHelper.InitLogHelper("log.log")
@@ -29,11 +57,12 @@ func main()  {
 	token := utils.GetBotToken()
 	l.Info("Starting Bot.")
 	l.Debug("token: ", token)
-	db.InitDbClient()
-	err := db.InitLicense()
+	err := db.InitDbClient()
 	if err != nil {
-		fmt.Println(err)
+		return 
 	}
+	wg.Add(1)
+	go periodicCheck()
 	b, err := gotgbot.NewBot(token, &gotgbot.BotOpts{
 		Client:      http.Client{},
 		GetTimeout:  gotgbot.DefaultGetTimeout,
