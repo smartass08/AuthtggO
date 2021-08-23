@@ -1,7 +1,7 @@
 package generateKey
 
 import (
-	"AuthtggO/helper/authGG"
+	"AuthtggO/helper/InfoPackage"
 	"AuthtggO/utils"
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -9,9 +9,13 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
 	"strconv"
 	"strings"
+	"sync"
 )
 
+var wg sync.WaitGroup
+
 func generateKeyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
+	var message string
 	if !utils.IsUserSudo(ctx.EffectiveUser.Id) {
 		return nil
 	}
@@ -40,14 +44,31 @@ func generateKeyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 			return err
 		}
 	}
-	_, err = b.SendMessage(ctx.EffectiveChat.Id, authGG.CreateKey(Quantity, days, prefix),
+	wg.Add(1)
+	channelKeys := make(chan string, Quantity)
+ 	go InfoPackage.CreateKey(Quantity, days, prefix, channelKeys)
+	if err != nil {
+		message = err.Error()
+	}
+	msg, err := b.SendMessage(ctx.EffectiveChat.Id, "Starting process to create keys\nThis may take some time as API is slow as your grandma",
 		&gotgbot.SendMessageOpts{
 			ParseMode:             "HTML",
 			ReplyToMessageId:      ctx.EffectiveMessage.MessageId,
 			DisableWebPagePreview: true},
 	)
 	if err != nil {
-		fmt.Println(err)
+		return err
+	}
+
+	for i := range channelKeys{
+		message +=  fmt.Sprintf("<code>%v</code>\n", i)
+		_, err := b.EditMessageText(message, &gotgbot.EditMessageTextOpts{MessageId: msg.MessageId, ChatId: msg.Chat.Id, ParseMode: "HTML"})
+		if err != nil {
+			return err
+		}
+	}
+	_, err = b.EditMessageText(message+"\n\nAll keys processed", &gotgbot.EditMessageTextOpts{MessageId: msg.MessageId, ChatId: msg.Chat.Id, ParseMode: "HTML"})
+	if err != nil {
 		return err
 	}
 	return nil

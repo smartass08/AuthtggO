@@ -191,17 +191,17 @@ func CompareMapStructUser(someMap map[string]interface{}, someStruct User) (same
 }
 func GetOneUser(username string) (User, bool) {
 	for _, v := range allUsers {
-		if v.UserName == username{
+		if v.UserName == username {
 			return *v, true
 		}
 	}
 	return User{}, false
 }
 
-func GetallKeysOfUser(username string) []string{
+func GetallKeysOfUser(username string) []string {
 	allkeys := make([]string, 0)
-	for _,v := range allLicenses {
-		if v.UsedBy == username{
+	for _, v := range allLicenses {
+		if v.UsedBy == username {
 			allkeys = append(allkeys, v.Key)
 		}
 	}

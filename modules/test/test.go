@@ -18,7 +18,7 @@ func testHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(apiObject.FetchLicenseInfo("Nra-MI73N-SH0JN-72DI2-NA2PA"))
+	fmt.Println(apiObject.ResetHwid("mb13"))
 	return nil
 }
 

@@ -4,42 +4,40 @@ import (
 	"AuthtggO/utils"
 	"fmt"
 	"github.com/smartass08/AuthGG-Go/Admin"
-	"strings"
+	"time"
 )
 
-func CreateKey(amount int, duration int, prefix string) string {
+func CreateKey(amount int, duration int, prefix string) (map[string]interface{}, error) {
 	apiObject := Admin.Administration{}
-	var keys []string
 	err := apiObject.Init(utils.GetApiHash())
 	if err != nil {
-		return err.Error()
+		return nil, err
 	}
 	key, err := apiObject.GenerateLicense(amount, duration, prefix)
 	if err != nil {
-		return err.Error()
+		return nil, err
 	}
-	for _, v := range key{
-		keys = append(keys, v.(string))
-	}
-	return fmt.Sprintf(" %v", strings.TrimLeft(fmt.Sprintf("%s", utils.ParseSliceKeys(keys)), "[]"))
+	return key, nil
 }
 
-func DeleteKey(keyRaw []string) string {
+func DeleteKey(keyRaw []string, channel chan string) error {
 	apiObject := Admin.Administration{}
 	err := apiObject.Init(utils.GetApiHash())
 	if err != nil {
-		return err.Error()
+		return err
 	}
-	message := ""
 	for _, v := range keyRaw{
+		fmt.Println(v)
 		check, err := apiObject.DeleteKey(v)
 		if err != nil {
-			message += fmt.Sprintf("`%v` : %v\n", v, err.Error())
+			channel <- fmt.Sprintf("`%v` : %v\n", v, err.Error())
 			continue
 		}
-		message += fmt.Sprintf("`%v` : %v\n", v, check["info"])
+		channel <- fmt.Sprintf("`%v` : %v\n", v, check["info"])
+		time.Sleep(time.Second*2)
 	}
-	return message
+	close(channel)
+	return nil
 }
 
 func FetchAllLicenses() map[string]interface{} {
@@ -60,4 +58,31 @@ func FetchAllUsers() map[string]interface{} {
 	}
 	kek,_ := apiObject.FetchAllUserInfo()
 	return kek
+}
+
+func ResetHwid(username string) (string, error) {
+	apiObject := Admin.Administration{}
+	err := apiObject.Init(utils.GetApiHash())
+	if err != nil {
+		return "", nil
+	}
+	result, err := apiObject.ResetHwid(username)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("<code>%v</code>\nStatus:  <code>%v</code>", result["info"].(string),  result["status"].(string)), nil
+
+}
+
+func FetchOneLicenseInfo(license string) (map[string]interface{}, error){
+	apiObject := Admin.Administration{}
+	err := apiObject.Init(utils.GetApiHash())
+	if err != nil {
+		return nil, err
+	}
+	result, err := apiObject.FetchLicenseInfo(license)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }

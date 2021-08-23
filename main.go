@@ -6,6 +6,7 @@ import (
 	"AuthtggO/modules/deleteKey"
 	"AuthtggO/modules/generateKey"
 	"AuthtggO/modules/getInfo"
+	"AuthtggO/modules/resethwid"
 	"AuthtggO/modules/start"
 	"AuthtggO/modules/test"
 	"AuthtggO/utils"
@@ -25,10 +26,11 @@ func RegisterAllHandlers(updater *ext.Updater)  {
 	generateKey.LoadgenerateKeyHandler(updater)
 	deleteKey.LoaddeleteKeyHandler(updater)
 	test.LoadTestHandler(updater)
+	resethwid.LoadResetUserHandler(updater)
 }
 func periodicCheck()  {
 	l := logHelper.GetLogger()
-	time.Sleep(time.Minute*3)
+	time.Sleep(time.Minute*4)
 	l.Info("Initialising update sequence")
 	defer wg.Done()
 	for {
