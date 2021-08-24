@@ -5,6 +5,7 @@ import (
 	"AuthtggO/logHelper"
 	"AuthtggO/utils"
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -143,7 +144,7 @@ func AddLicenseToLocal(trigger *Licence) {
 
 func UpdateAlllicenses() error {
 	var operations []mongo.WriteModel
-	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
 	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses")
 	for _, v := range authGG.FetchAllLicenses() {
@@ -167,7 +168,7 @@ func UpdateAlllicenses() error {
 					allLicenses[ii] = newLicense
 					doc, err := toDoc(newLicense)
 					if err != nil {
-						return err
+						continue
 					}
 					operation := mongo.NewUpdateOneModel()
 					operation.SetFilter(bson.M{"License": newLicense.Key})
@@ -191,18 +192,19 @@ func UpdateAlllicenses() error {
 			}
 			doc, err := toDoc(newLicense)
 			if err != nil {
-				return err
+				continue
 			}
 			operation := mongo.NewInsertOneModel()
 			operation.SetDocument(bson.M{"License": newLicense.Key, "data": doc})
 			operations = append(operations, operation)
 			AddLicenseToLocal(newLicense)
+			fmt.Printf("Added to operation stuff : %v\n", newLicense)
 		}
 	}
 	if len(operations) > 0 {
 		bulkOption := options.BulkWriteOptions{}
 		bulkOption.SetOrdered(false)
-		_, err := collection.BulkWrite(ctx, operations, &bulkOption)
+		_, err := collection.BulkWrite(context.Background(), operations, &bulkOption)
 		if err != nil {
 			return err
 		}
@@ -235,6 +237,7 @@ func FetchAndAddOneLicense(license string) error {
 	}
 	return err
 }
+
 func FetchAndUpdateOneLicense(license string, info map[string]interface{}) error {
 	if info == nil {
 		time.Sleep(time.Second * 2)
