@@ -19,11 +19,11 @@ var (
 )
 
 type Licence struct {
-	Key    string `json:"token,omitempty"`
-	Rank   string `json:"rank,omitempty"`
-	Used   string `json:"used,omitempty"`
-	UsedBy string `json:"used_by,omitempty"`
-	Days   string `json:"days,omitempty"`
+	Key     string `json:"token,omitempty"`
+	Rank    string `json:"rank,omitempty"`
+	Used    string `json:"used,omitempty"`
+	UsedBy  string `json:"used_by,omitempty"`
+	Days    string `json:"days,omitempty"`
 	Created string `bson:"created,omitempty"`
 }
 
@@ -59,7 +59,7 @@ func AddLicense(licence Licence) error {
 	return nil
 }
 
-func UpdateLicense(licence Licence) error{
+func UpdateLicense(licence Licence) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
 	collection := DatabaseClient.Mongo.Database(utils.GetDataBaseName()).Collection("Licenses")
@@ -101,7 +101,7 @@ func FetchAllLicences() (licences []*Licence, err error) {
 				UsedBy: result["data"].(primitive.M)["usedby"].(string),
 				Days:   result["data"].(primitive.M)["days"].(string),
 			}
-			if result["data"].(primitive.M)["created"] != nil{
+			if result["data"].(primitive.M)["created"] != nil {
 				licenseToBeAdded.Created = result["data"].(primitive.M)["created"].(string)
 			}
 			licences = append(licences, licenseToBeAdded)
@@ -159,9 +159,9 @@ func UpdateAlllicenses() error {
 						UsedBy: v.(map[string]interface{})["used_by"].(string),
 						Days:   v.(map[string]interface{})["days"].(string),
 					}
-					time.Sleep(time.Second*2)
+					time.Sleep(time.Second * 2)
 					tempLicenseFetch, err := authGG.FetchOneLicenseInfo(vv.Key)
-					if err == nil{
+					if err == nil {
 						newLicense.Created = tempLicenseFetch["created"].(string)
 					}
 					allLicenses[ii] = newLicense
@@ -184,9 +184,9 @@ func UpdateAlllicenses() error {
 				UsedBy: v.(map[string]interface{})["used_by"].(string),
 				Days:   v.(map[string]interface{})["days"].(string),
 			}
-			time.Sleep(time.Second*3)
+			time.Sleep(time.Second * 3)
 			tempLicenseFetch, err := authGG.FetchOneLicenseInfo(v.(map[string]interface{})["token"].(string))
-			if err == nil{
+			if err == nil {
 				newLicense.Created = tempLicenseFetch["created"].(string)
 			}
 			doc, err := toDoc(newLicense)
@@ -216,18 +216,18 @@ func FetchAndAddOneLicense(license string) error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(time.Second*2)
-	for _, v := range authGG.FetchAllLicenses(){
-		if v.(map[string]interface{})["token"].(string) == license{
-				tempVar = v.(map[string]interface{})["days"].(string)
+	time.Sleep(time.Second * 2)
+	for _, v := range authGG.FetchAllLicenses() {
+		if v.(map[string]interface{})["token"].(string) == license {
+			tempVar = v.(map[string]interface{})["days"].(string)
 		}
 	}
 	err = AddLicense(Licence{
-		Key:    result["license"].(string),
-		Rank:   result["rank"].(string),
-		Used:   result["used"].(string),
-		UsedBy: result["used_by"].(string),
-		Days:   tempVar,
+		Key:     result["license"].(string),
+		Rank:    result["rank"].(string),
+		Used:    result["used"].(string),
+		UsedBy:  result["used_by"].(string),
+		Days:    tempVar,
 		Created: result["created"].(string),
 	})
 	if err != nil {
@@ -236,24 +236,24 @@ func FetchAndAddOneLicense(license string) error {
 	return err
 }
 func FetchAndUpdateOneLicense(license string, info map[string]interface{}) error {
-	if info == nil{
-		time.Sleep(time.Second*2)
+	if info == nil {
+		time.Sleep(time.Second * 2)
 		info, _ = authGG.FetchOneLicenseInfo(license)
 	}
 	tempNonUpdated, check := GetOneLicense(license)
-	if !check{
-		time.Sleep(time.Second*2)
+	if !check {
+		time.Sleep(time.Second * 2)
 		err := FetchAndAddOneLicense(license)
 		if err != nil {
 			return err
 		}
 	}
 	toBeUpdatedLicense := Licence{
-		Key:    info["license"].(string),
-		Rank:   info["rank"].(string),
-		Used:   info["used"].(string),
-		UsedBy: info["used_by"].(string),
-		Days:   tempNonUpdated.Days,
+		Key:     info["license"].(string),
+		Rank:    info["rank"].(string),
+		Used:    info["used"].(string),
+		UsedBy:  info["used_by"].(string),
+		Days:    tempNonUpdated.Days,
 		Created: info["created"].(string),
 	}
 	err := UpdateLicense(toBeUpdatedLicense)
@@ -283,16 +283,16 @@ func toDoc(v interface{}) (doc *bson.M, err error) {
 
 func GetOneLicense(license string) (Licence, bool) {
 	for _, v := range allLicenses {
-		if v.Key == license{
+		if v.Key == license {
 			return *v, true
 		}
 	}
 	return Licence{}, false
 }
 
-func UpdateOneLicenseLocal(licence Licence)  {
-	for i ,v := range allLicenses{
-		if v.Key == licence.Key{
+func UpdateOneLicenseLocal(licence Licence) {
+	for i, v := range allLicenses {
+		if v.Key == licence.Key {
 			allLicenses[i] = &licence
 		}
 	}

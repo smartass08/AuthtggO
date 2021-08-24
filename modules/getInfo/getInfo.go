@@ -11,8 +11,10 @@ import (
 )
 
 func getInfoHandler(b *gotgbot.Bot, ctx *ext.Context) error {
-	if !utils.IsUserOwner(ctx.EffectiveUser.Id) {
-		return nil
+	if !utils.IsUserSudo(ctx.EffectiveUser.Id){
+		if !utils.IsUserOwner(ctx.EffectiveUser.Id){
+			return nil
+		}
 	}
 	if !(len(strings.Split(ctx.EffectiveMessage.Text, " ")) == 3){
 		_, err := ctx.EffectiveMessage.Reply(b, "I need you to send me 2 arguments", nil)

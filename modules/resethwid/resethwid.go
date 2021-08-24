@@ -11,6 +11,11 @@ import (
 )
 
 func ResetUserHandler(b *gotgbot.Bot, ctx *ext.Context) error {
+	if !utils.IsUserSudo(ctx.EffectiveUser.Id){
+		if !utils.IsUserOwner(ctx.EffectiveUser.Id){
+			return nil
+		}
+	}
 	if !utils.IsUserSudo(ctx.EffectiveUser.Id) {
 		return nil
 	}

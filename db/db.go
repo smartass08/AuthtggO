@@ -43,4 +43,3 @@ func InitDbClient() error {
 	}
 	return nil
 }
-

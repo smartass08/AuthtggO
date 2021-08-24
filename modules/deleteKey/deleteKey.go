@@ -2,6 +2,7 @@ package deleteKey
 
 import (
 	"AuthtggO/helper/authGG"
+	"AuthtggO/utils"
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -13,6 +14,11 @@ import (
 var wg sync.WaitGroup
 
 func deleteKeyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
+	if !utils.IsUserSudo(ctx.EffectiveUser.Id){
+		if !utils.IsUserOwner(ctx.EffectiveUser.Id){
+			return nil
+		}
+	}
 	var message string
 	if !(len(strings.Split(ctx.EffectiveMessage.Text, "\n")) >= 1 ) {
 		_, err := ctx.EffectiveMessage.Reply(b, "I need you to send me atleast 1 license key", nil)

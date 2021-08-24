@@ -15,6 +15,11 @@ import (
 var wg sync.WaitGroup
 
 func generateKeyHandler(b *gotgbot.Bot, ctx *ext.Context) error {
+	if !utils.IsUserSudo(ctx.EffectiveUser.Id){
+		if !utils.IsUserOwner(ctx.EffectiveUser.Id){
+			return nil
+		}
+	}
 	var message string
 	if !utils.IsUserSudo(ctx.EffectiveUser.Id) {
 		return nil

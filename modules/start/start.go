@@ -9,8 +9,10 @@ import (
 )
 
 func startHandler(b *gotgbot.Bot, ctx *ext.Context) error   {
-	if !utils.IsUserOwner(ctx.EffectiveUser.Id) {
-		return nil
+	if !utils.IsUserSudo(ctx.EffectiveUser.Id){
+		if !utils.IsUserOwner(ctx.EffectiveUser.Id){
+			return nil
+		}
 	}
 	_, err := ctx.EffectiveMessage.Reply(b, "Hello, this is a bot to manage licences and users of auth.gg", nil)
 	if err != nil {
