@@ -26,6 +26,7 @@ type Licence struct {
 	UsedBy  string `json:"used_by,omitempty"`
 	Days    string `json:"days,omitempty"`
 	Created string `bson:"created,omitempty"`
+	LastResetDates []int64 `json:"lastResetDate"`
 }
 
 func AddLicensesFirstTIme(licenses []Licence) error {
@@ -105,6 +106,14 @@ func FetchAllLicences() (licences []*Licence, err error) {
 			if result["data"].(primitive.M)["created"] != nil {
 				licenseToBeAdded.Created = result["data"].(primitive.M)["created"].(string)
 			}
+			tempTimeSlice := make([]int64, 0)
+			if result["data"].(primitive.M)["lastresetdates"] != nil{
+				for _, vv := range result["data"].(primitive.M)["lastresetdates"].(primitive.A){
+					tempTimeSlice = append(tempTimeSlice, vv.(int64))
+				}
+				licenseToBeAdded.LastResetDates = tempTimeSlice
+			}
+
 			licences = append(licences, licenseToBeAdded)
 		}
 	}
@@ -120,6 +129,7 @@ func GetLicenses() []Licence {
 			Used:   v.(map[string]interface{})["used"].(string),
 			UsedBy: v.(map[string]interface{})["used_by"].(string),
 			Days:   v.(map[string]interface{})["days"].(string),
+			LastResetDates: []int64{},
 		})
 	}
 	return licenses
@@ -155,6 +165,7 @@ func UpdateAlllicenses() error {
 				if !CompareMapStructLicense(v.(map[string]interface{}), *vv) {
 					newLicense := &Licence{
 						Key:    vv.Key,
+						LastResetDates: vv.LastResetDates,
 						Rank:   v.(map[string]interface{})["rank"].(string),
 						Used:   v.(map[string]interface{})["used"].(string),
 						UsedBy: v.(map[string]interface{})["used_by"].(string),
@@ -184,6 +195,7 @@ func UpdateAlllicenses() error {
 				Used:   v.(map[string]interface{})["used"].(string),
 				UsedBy: v.(map[string]interface{})["used_by"].(string),
 				Days:   v.(map[string]interface{})["days"].(string),
+				LastResetDates: []int64{},
 			}
 			time.Sleep(time.Second * 3)
 			tempLicenseFetch, err := authGG.FetchOneLicenseInfo(v.(map[string]interface{})["token"].(string))
@@ -257,6 +269,7 @@ func FetchAndUpdateOneLicense(license string, info map[string]interface{}) error
 		Used:    info["used"].(string),
 		UsedBy:  info["used_by"].(string),
 		Days:    tempNonUpdated.Days,
+		LastResetDates: tempNonUpdated.LastResetDates,
 		Created: info["created"].(string),
 	}
 	err := UpdateLicense(toBeUpdatedLicense)
@@ -299,4 +312,36 @@ func UpdateOneLicenseLocal(licence Licence) {
 			allLicenses[i] = &licence
 		}
 	}
+}
+
+func FetchResetCount(licence string) (int64, error){
+	for _, v := range allLicenses {
+		if v.Key == licence {
+			tempUser, _ := GetOneUser(v.UsedBy)
+			tempInt, err := utils.ReturnRestCounts(v.LastResetDates, tempUser.ExpiryDate, v.Days)
+			if err != nil {
+				return -1, err
+			}
+			return tempInt, nil
+		}
+	}
+	return -1, nil
+}
+
+func AddOneToResetCount(licence string, date time.Time) bool{
+	for i, v := range allLicenses {
+		if v.Key == licence {
+			allLicenses[i].LastResetDates = append(allLicenses[i].LastResetDates, date.UnixNano())
+			err := UpdateLicense(*allLicenses[i])
+			if err != nil {
+				err := UpdateLicense(*allLicenses[i])
+				if err != nil {
+					return false
+				}
+			}
+			return true
+
+		}
+	}
+	return false
 }

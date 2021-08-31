@@ -118,6 +118,7 @@ func AddUserToLocal(trigger *User) {
 	defer allUsersMutex.Unlock()
 	allUsers = append(allUsers, trigger)
 }
+
 func UpdateAllUsers() error {
 	var operations []mongo.WriteModel
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)

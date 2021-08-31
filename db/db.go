@@ -33,12 +33,13 @@ func initClient() *mongo.Client {
 
 func InitDbClient() error {
 	DatabaseClient = &DbClient{Mongo: initClient()}
-	err := InitLicense()
-	if err != nil {
+	err := InitLicense(); if err != nil {
 		return err
 	}
-	err = InitUsers()
-	if err != nil {
+	err = InitUsers(); if err != nil {
+		return err
+	}
+	err = InitTgUser(); if err != nil {
 		return err
 	}
 	return nil

@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.1
+	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/smartass08/AuthGG-Go v0.0.0-20210823174950-6c9230e38b43
 	go.mongodb.org/mongo-driver v1.7.1
 	go.uber.org/zap v1.19.0

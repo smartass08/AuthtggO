@@ -1,7 +1,6 @@
 package start
 
 import (
-	"AuthtggO/utils"
 	"fmt"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
@@ -9,10 +8,8 @@ import (
 )
 
 func startHandler(b *gotgbot.Bot, ctx *ext.Context) error   {
-	if !utils.IsUserSudo(ctx.EffectiveUser.Id){
-		if !utils.IsUserOwner(ctx.EffectiveUser.Id){
-			return nil
-		}
+	if ctx.EffectiveChat.Id != ctx.EffectiveUser.Id{
+		return nil
 	}
 	_, err := ctx.EffectiveMessage.Reply(b, "Hello, this is a bot to manage licences and users of auth.gg", nil)
 	if err != nil {

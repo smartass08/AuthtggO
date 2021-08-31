@@ -3,9 +3,12 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/araddon/dateparse"
 	"io/ioutil"
 	"log"
 	"reflect"
+	"strconv"
+	"time"
 )
 
 const ConfigJsonPath string = "config.json"
@@ -92,13 +95,6 @@ func RemoveDuplicates(elements []int64) []int64 {
 	return result
 }
 
-func ParseInterfaceToInt(i interface{}) int {
-	if reflect.TypeOf(i).Name() == "int32" {
-		return int(i.(int32))
-	}
-	return int(i.(int64))
-}
-
 func ParseInterfaceToInt64(i interface{}) int64 {
 	if reflect.TypeOf(i).Name() == "int64" {
 		return int64(i.(int64))
@@ -116,4 +112,45 @@ func ParseSliceKeys(keys []string) []string {
 		updatedKeys = append(updatedKeys, " ,\n")
 	}
 	return updatedKeys
+}
+
+// ReturnRestCounts Returns total amount of resets done in int || Returns -1 if error
+func ReturnRestCounts(timeSlice []int64, endDate string, validityInString string) (int64, error){
+	expiryDate, err := dateparse.ParseAny(endDate)
+	if err != nil {
+		//Return 10 if error
+		return -1, err
+	}
+	validityInt, err := strconv.Atoi(validityInString)
+	if err != nil {
+		return -1, err
+	}
+	startDate := expiryDate.AddDate(0,0, -validityInt)
+	StartDateCount := int(startDate.Month())
+	EndDateCount := int(expiryDate.Month())
+	monthCount := 0
+	for i := StartDateCount; i < EndDateCount; i++{
+		monthCount += 1
+	}
+	var resetCount int64
+	for _, v := range timeSlice{
+		thisDate := time.Unix(0, v)
+		tempCount := 0
+		for ii := 0; ii <= monthCount; ii++{
+			if inTimeSpan(startDate.AddDate(0,tempCount, 0 ), startDate.AddDate(0,tempCount+1, 0 ), time.Now()){
+				if inTimeSpan(startDate.AddDate(0,tempCount, 0 ), startDate.AddDate(0,tempCount+1, 0 ), thisDate){
+					resetCount += 1
+					break
+				}
+			} else {
+				tempCount += 1
+			}
+		}
+
+	}
+	return resetCount, nil
+}
+
+func inTimeSpan(start, end, check time.Time) bool {
+	return check.After(start) && check.Before(end)
 }

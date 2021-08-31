@@ -6,8 +6,12 @@ import (
 	"AuthtggO/modules/deleteKey"
 	"AuthtggO/modules/generateKey"
 	"AuthtggO/modules/getInfo"
+	"AuthtggO/modules/help"
+	"AuthtggO/modules/registerUser"
+	"AuthtggO/modules/resetadmin"
 	"AuthtggO/modules/resethwid"
 	"AuthtggO/modules/start"
+	"AuthtggO/modules/stats"
 	"AuthtggO/modules/test"
 	"AuthtggO/utils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -27,10 +31,18 @@ func RegisterAllHandlers(updater *ext.Updater)  {
 	deleteKey.LoaddeleteKeyHandler(updater)
 	test.LoadTestHandler(updater)
 	resethwid.LoadResetUserHandler(updater)
+	registerUser.LoadRegisterUserHandler(updater)
+	stats.LoadStatsHandler(updater)
+	help.LoadHelpHandler(updater)
+	resetadmin.LoadResethwidAdminHandler(updater)
+
 }
 func periodicCheck()  {
 	l := logHelper.GetLogger()
-	time.Sleep(time.Minute*4)
+	err := db.UpdateAlllicenses()
+	if err != nil {
+		l.Info(err)
+	}
 	l.Info("Initialising update sequence")
 	defer wg.Done()
 	for {
