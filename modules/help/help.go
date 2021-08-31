@@ -16,7 +16,7 @@ func helpHandler(b *gotgbot.Bot, ctx *ext.Context) error  {
 	if ctx.EffectiveChat.Id != ctx.EffectiveUser.Id{
 		return nil
 	}
-	message := fmt.Sprintf("<b>Help Section of ChannelGoBot</b>\n\n"+
+	message := fmt.Sprintf("<b>Help Section of this management bot</b>\n\n"+
 		"Available commands are as follows: \n\n"+
 		"/start : <i>The all boring start command.</i>\n\n"+
 		"/register : <i>Registers you as valid user, Tap register to know more</i>\n\n"+
