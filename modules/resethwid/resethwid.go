@@ -67,6 +67,7 @@ func ResetUserHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 			tempLicense, _ := db.GetOneLicense(someKeys[0])
 			userKey = tempLicense.Key
 			if admin{
+				valid = true
 				go addCounttoDb(confirmChannel, tempLicense.Key)
 			} else {
 				tempTgUSer, _ := db.GetOneTgUser(ctx.EffectiveUser.Id)
@@ -99,7 +100,7 @@ func ResetUserHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	} else {
 		message = "User not found"
 	}
-	if admin && valid {
+	if valid {
 		someChan := make(chan string)
 		go func() {
 			mutexCheckForced()
