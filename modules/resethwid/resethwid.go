@@ -55,11 +55,12 @@ func ResetUserHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	loaderUsername =  strings.Split(ctx.EffectiveMessage.Text, " ")[1]
 	confirmChannel := make(chan bool)
 	if db.CheckTgUserExists(ctx.EffectiveUser.Id) || admin == true{
-		_, err := db.GetOneUser(loaderUsername)
-		valid = true
-		if !err{
+		chack, err := db.GetOneUser(loaderUsername)
+		if !err || chack.UserName == ""{
 			valid = false
 			message = "User not found"
+		} else {
+			valid = true
 		}
 		if valid{
 			someKeys := db.GetallKeysOfUser(loaderUsername)
@@ -98,7 +99,7 @@ func ResetUserHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	} else {
 		message = "User not found"
 	}
-	if admin || valid {
+	if admin && valid {
 		someChan := make(chan string)
 		go func() {
 			mutexCheckForced()
