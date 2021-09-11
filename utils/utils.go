@@ -22,6 +22,7 @@ type ConfigJson struct {
 	OwnerId     int64 `json:"owner_id"`
 	ApiHash		string `json:"apiHashGG"`
 	DataBaseName string `json:"dbName"`
+	ModChat		int64	`json:"mod_chat"`
 }
 
 var Config *ConfigJson = InitConfig()
@@ -72,6 +73,10 @@ func GetApiHash() string {
 
 func GetDataBaseName() string {
 	return Config.DataBaseName
+}
+
+func GetModChatId() int64 {
+	return Config.ModChat
 }
 
 func GenerateUserLink(userId int64, parseMode string) string {
