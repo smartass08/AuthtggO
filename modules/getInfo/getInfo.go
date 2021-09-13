@@ -10,12 +10,30 @@ import (
 	"strings"
 )
 
+func checkMods(b *gotgbot.Bot, person int64) bool{
+	allAdmins, err := b.GetChatAdministrators(utils.GetModChatId())
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	for _, v := range allAdmins{
+		if person == v.GetUser().Id{
+			return true
+		}
+	}
+	return false
+}
+
 func getInfoHandler(b *gotgbot.Bot, ctx *ext.Context) error {
 	if !utils.IsUserSudo(ctx.EffectiveUser.Id){
 		if !utils.IsUserOwner(ctx.EffectiveUser.Id){
-			return nil
+			if !checkMods(b, ctx.EffectiveUser.Id){
+				return nil
+			}
+
 		}
 	}
+
 	if !(len(strings.Split(ctx.EffectiveMessage.Text, " ")) == 3){
 		_, err := ctx.EffectiveMessage.Reply(b, "I need you to send me 2 arguments", nil)
 		if err != nil {
